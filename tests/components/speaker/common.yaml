@@ -1,0 +1,44 @@
+number:
+  - platform: template
+    name: "Speaker Number"
+    id: my_number
+    optimistic: true
+    min_value: 0
+    max_value: 100
+    step: 1
+
+esphome:
+  on_boot:
+    then:
+      - speaker.mute_on:
+      - speaker.mute_off:
+      - if:
+          condition: speaker.is_stopped
+          then:
+            - speaker.play: [0, 1, 2, 3]
+      - speaker.volume_set: 0.9
+      - if:
+          condition: speaker.is_playing
+          then:
+            - speaker.finish:
+      - speaker.stop:
+
+button:
+  - platform: template
+    name: "Speaker Button"
+    on_press:
+      then:
+        - speaker.play: [0x10, 0x20, 0x30, 0x40]
+        - speaker.play: !lambda |-
+            return {0x01, 0x02, (uint8_t)id(my_number).state};
+
+i2s_audio:
+  i2s_lrclk_pin: ${i2s_bclk_pin}
+  i2s_bclk_pin: ${i2s_lrclk_pin}
+  i2s_mclk_pin: ${i2s_mclk_pin}
+
+speaker:
+  - platform: i2s_audio
+    id: speaker_id
+    dac_type: external
+    i2s_dout_pin: ${i2s_dout_pin}
